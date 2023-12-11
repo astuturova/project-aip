@@ -10,6 +10,7 @@ def get_forecast_for_day(name: str):
 
     weatherCode = {
         "0": "Unknown",
+
         "1000": "Clear, Sunny",
         "1100": "Mostly Clear",
         "1101": "Partly Cloudy",
