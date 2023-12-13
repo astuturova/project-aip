@@ -63,7 +63,7 @@ def get_forecast_for_day(name: str):
         data = json_data["timelines"]["daily"][0]["values"]
         for key in out:
             if key in ["weatherCodeMax", "weatherCodeMin"]:
-                out[key] = weatherCode[str(data[key])]
+                out[key] = weatherCode[data[key]]
                 continue
             out[key] = data[key]
     return out
