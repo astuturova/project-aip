@@ -1,7 +1,9 @@
 import requests
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram import types
+
 
 def get_forecast_for_day(name: str):
-
     url = f"https://api.tomorrow.io/v4/weather/forecast?location={name}&timesteps=1d&apikey=nGhxMDMjU1iN1rxuRzh6n5lkUxFulrtJ"
 
     headers = {"accept": "application/json"}
@@ -66,6 +68,18 @@ def get_forecast_for_day(name: str):
     return out
 
 
-if name == "__main__":
-    data = get_forecast_for_day('moscow')
-    print(data)
+class KeyboardConstructor():
+
+    def get_keyboard(self):
+        buttons = [
+            [
+                types.InlineKeyboardButton(text="Погода на завтра", callback_data="forecast_tomorrow"),
+                types.InlineKeyboardButton(text="Погода на сегодня", callback_data="forecast_today")
+            ],
+            [
+                types.InlineKeyboardButton(text="Настроить регион", callback_data="set_region"),
+                types.InlineKeyboardButton(text="Настроить таймер", callback_data="set_timer")
+            ]
+        ]
+        keyboard = types.InlineKeyboardMarkup(inline_keyboard=buttons)
+        return keyboard
