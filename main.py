@@ -1,10 +1,10 @@
 import asyncio
 import logging
+from datetime import date, timedelta
 from contextlib import suppress
 from aiogram.exceptions import TelegramBadRequest
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters.command import Command
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 import config
 from utils import KeyboardConstructor, ForecastService
 
@@ -13,28 +13,65 @@ bot = Bot(token=config.bot_token)
 dp = Dispatcher()
 keyboard_constructor = KeyboardConstructor()
 forecast_service = ForecastService()
+settings = {}
+
+
+def get_output_message_for_day(data, date):
+    return (f"{data['location']}\n"
+            f"Прогноз погоды на {date}: \n"
+            f"Вас ожидает {data['weatherCodeMax']}\n"
+            f"Средняя температура: {data['temperatureAvg']} ℃, но ощущается как: {data['temperatureApparentAvg']} ℃\n"
+            f"Средняя влажность: {data['humidityAvg']}\n"
+            f"Средняя скорость ветра {data['windSpeedAvg']}\n"
+            f"Порывы ветра: {data['windGustAvg']}")
+
+
+def get_output_message_for_week(data):
+    message = ""
+    if len(data) != 0:
+        message += data[0]['location'] + "\n\n"
+    for elem in data:
+        message += (f"Прогноз погоды на {elem['time']}: \n"
+                    f"Вас ожидает {elem['weatherCodeMax']}\n"
+                    f"Средняя температура: {elem['temperatureAvg']} ℃, но ощущается как: {elem['temperatureApparentAvg']} ℃\n"
+                    f"Средняя влажность: {elem['humidityAvg']}\n"
+                    f"Средняя скорость ветра {elem['windSpeedAvg']}\n"
+                    f"Порывы ветра: {elem['windGustAvg']}\n\n")
+    return message[:-1]
 
 
 # Отклик на команду старт
 @dp.message(Command("start"))
 async def cmd_random(message: types.Message):
+    chat_id = message.chat.id
+    settings[chat_id] = {
+        'region': "RU-MOW",
+        'timer': 86400
+    }
     await message.answer(
         "Привет, я бот, составляющий проноз погоды",
-        reply_markup=keyboard_constructor.get_keyboard()
+        reply_markup=keyboard_constructor.get_menu_keyboard()
     )
 
 
-# Отклик на кнопки "Прогноз погоды на завтра" и "Прогноз погоды на сегодня"
 @dp.callback_query(F.data.startswith("forecast_"))
 async def callbacks_num(callback: types.CallbackQuery):
     action = callback.data.split("_")[1]
-
+    chat_id = callback.message.chat.id
+    message = ""
     if action == "tomorrow":
-        await update_message(callback.message, f"Прогноз погоды на завтра \n Температура будет: {forecast_service.get_forecast_for_day('moscow')['temperatureAvg']}")
+        data = forecast_service.get_forecast_for_day(settings[chat_id]['region'], date.today() + timedelta(days=1))
+        message = get_output_message_for_day(data, "завтра")
     elif action == "today":
-        await update_message(callback.message, "Прогноз погоды на сегодня")
+        data = forecast_service.get_forecast_for_day(settings[chat_id]['region'], date.today())
+        message = get_output_message_for_day(data, "сегодня")
+    elif action == "week":
+        data = forecast_service.get_forecast_for_week(settings[chat_id]['region'])
+        message = get_output_message_for_week(data)
+    await update_message(callback.message, message)
 
     await callback.answer()
+
 
 # Отклик на кнопки "Прогноз погоды на завтра" и "Прогноз погоды на сегодня"
 @dp.callback_query(F.data.startswith("set_"))
@@ -42,10 +79,56 @@ async def callbacks_num(callback: types.CallbackQuery):
     action = callback.data.split("_")[1]
 
     if action == "region":
-        await update_message(callback.message, "Выбрана настройка региона")
+        await update_message_to_region_settings(callback.message)
     elif action == "timer":
-        await update_message(callback.message, "Выбрана настройка таймера")
+        await update_message_to_timer_settings(callback.message)
 
+    await callback.answer()
+
+
+@dp.callback_query(F.data.startswith("region_"))
+async def callbacks_num(callback: types.CallbackQuery):
+    action = callback.data.split("_")[1]
+    chat_id = callback.message.chat.id
+
+    if action == "moscow":
+        settings[chat_id]['region'] = "RU-MOW"
+    elif action == "petersburg":
+        settings[chat_id]['region'] = "RU-SPE"
+    elif action == "kazan":
+        settings[chat_id]['region'] = "RU-TA"
+    elif action == "volgograd":
+        settings[chat_id]['region'] = "RU-VGG"
+    elif action == "dubai":
+        settings[chat_id]['region'] = "AE-DU"
+    elif action == "san-francisco":
+        settings[chat_id]['region'] = "US-CA"
+
+    data = forecast_service.get_forecast_for_day(settings[chat_id]['region'], date.today())
+    message = get_output_message_for_day(data, "сегодня")
+    await update_message(callback.message, message)
+
+    await callback.answer()
+
+
+@dp.callback_query(F.data.startswith("timer_"))
+async def callbacks_num(callback: types.CallbackQuery):
+    action = callback.data.split("_")[1]
+    chat_id = callback.message.chat.id
+
+    if action == "minute":
+        settings[chat_id]['timer'] = 60
+    elif action == "hour":
+        settings[chat_id]['timer'] = 3600
+    elif action == "day":
+        settings[chat_id]['timer'] = 43200
+    elif action == "cycle":
+        settings[chat_id]['timer'] = 86400
+
+    data = forecast_service.get_forecast_for_day(settings[chat_id]['region'], date.today())
+    message = get_output_message_for_day(data, "сегодня")
+    await update_message(callback.message, message)
+    print(settings[chat_id]['timer'])
     await callback.answer()
 
 
@@ -54,7 +137,22 @@ async def update_message(message: types.Message, new_value: str):
     with suppress(TelegramBadRequest):
         await message.edit_text(
             new_value,
-            reply_markup=keyboard_constructor.get_keyboard()
+            reply_markup=keyboard_constructor.get_menu_keyboard()
+        )
+
+
+async def update_message_to_region_settings(message: types.Message):
+    with suppress(TelegramBadRequest):
+        await message.edit_text(
+            "Выберите регион:",
+            reply_markup=keyboard_constructor.get_region_settings_keyboard()
+        )
+
+async def update_message_to_timer_settings(message: types.Message):
+    with suppress(TelegramBadRequest):
+        await message.edit_text(
+            "Настройте таймер:",
+            reply_markup=keyboard_constructor.get_timer_settings_keyboard()
         )
 
 
