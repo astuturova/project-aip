@@ -6,12 +6,13 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters.command import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import config
-from utils import KeyboardConstructor
+from utils import KeyboardConstructor, ForecastService
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=config.bot_token)
 dp = Dispatcher()
 keyboard_constructor = KeyboardConstructor()
+forecast_service = ForecastService()
 
 
 # Отклик на команду старт
@@ -29,7 +30,7 @@ async def callbacks_num(callback: types.CallbackQuery):
     action = callback.data.split("_")[1]
 
     if action == "tomorrow":
-        await update_message(callback.message, "Прогноз погоды на завтра")
+        await update_message(callback.message, f"Прогноз погоды на завтра \n Температура будет: {forecast_service.get_forecast_for_day('moscow')['temperatureAvg']}")
     elif action == "today":
         await update_message(callback.message, "Прогноз погоды на сегодня")
 
