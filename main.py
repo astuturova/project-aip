@@ -16,6 +16,18 @@ forecast_service = ForecastService()
 settings = {}
 
 
+async def send_message_interval():
+    while True:
+        await asyncio.sleep(60)
+        for key in settings.keys():
+            settings[key]["time"] -= 60
+            if settings[key]["time"] == 0:
+                data = forecast_service.get_forecast_for_day(settings[key]['region'], date.today())
+                message = get_output_message_for_day(data, "сегодня")
+                await bot.send_message(key, text=message, reply_markup=keyboard_constructor.get_menu_keyboard())
+            settings[key]["time"] = settings[key]["time"]
+
+
 def get_output_message_for_day(data, date):
     return (f"{data['location']}\n"
             f"Прогноз погоды на {date}: \n"
@@ -46,7 +58,8 @@ async def cmd_random(message: types.Message):
     chat_id = message.chat.id
     settings[chat_id] = {
         'region': "RU-MOW",
-        'timer': 86400
+        'timer': 86400,
+        "time": 86400
     }
     await message.answer(
         "Привет, я бот, составляющий проноз погоды",
@@ -118,12 +131,16 @@ async def callbacks_num(callback: types.CallbackQuery):
 
     if action == "minute":
         settings[chat_id]['timer'] = 60
+        settings[chat_id]['time'] = 60
     elif action == "hour":
         settings[chat_id]['timer'] = 3600
+        settings[chat_id]['time'] = 3600
     elif action == "day":
         settings[chat_id]['timer'] = 43200
+        settings[chat_id]['time'] = 43200
     elif action == "cycle":
         settings[chat_id]['timer'] = 86400
+        settings[chat_id]['time'] = 86400
 
     data = forecast_service.get_forecast_for_day(settings[chat_id]['region'], date.today())
     message = get_output_message_for_day(data, "сегодня")
@@ -148,6 +165,7 @@ async def update_message_to_region_settings(message: types.Message):
             reply_markup=keyboard_constructor.get_region_settings_keyboard()
         )
 
+
 async def update_message_to_timer_settings(message: types.Message):
     with suppress(TelegramBadRequest):
         await message.edit_text(
@@ -157,6 +175,8 @@ async def update_message_to_timer_settings(message: types.Message):
 
 
 async def main():
+    loop = asyncio.get_event_loop()
+    t1 = loop.create_task(send_message_interval())
     await dp.start_polling(bot)
 
 
