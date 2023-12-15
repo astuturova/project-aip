@@ -27,16 +27,14 @@ async def send_message_interval():
                 await bot.send_message(key, text=message, reply_markup=keyboard_constructor.get_menu_keyboard())
             settings[key]["time"] = settings[key]["time"]
 
-
 def get_output_message_for_day(data, date):
-    return (f"{data['location']}\n"
-            f"Прогноз погоды на {date}: \n"
-            f"Вас ожидает {data['weatherCodeMax']}\n"
-            f"Средняя температура: {data['temperatureAvg']} ℃, но ощущается как: {data['temperatureApparentAvg']} ℃\n"
-            f"Средняя влажность: {data['humidityAvg']}\n"
-            f"Средняя скорость ветра {data['windSpeedAvg']}\n"
-            f"Порывы ветра: {data['windGustAvg']}")
-
+    return (f" 📍 Вы смотрите погоду в городе {data['location']}\n\n"
+            f" ☺ Ваш персональный прогноз погоды на {date}: \n"
+            f" - 😁 В течение дня будет {data['weatherCodeMax']}\n"
+            f" - 🌡️ Средняя температура воздуха составляет {data['temperatureAvg']} ℃, но ощущается как {data['temperatureApparentAvg']} ℃\n"
+            f" - 💧 Влажность около {data['humidityAvg']}\n%"
+            f" - 🌬️ Ветер {date} дует со скоростью {data['windSpeedAvg']}\n м/с"
+            f" - 💨 А порывы ветра достигают {data['windGustAvg']} м/с")
 
 def get_output_message_for_week(data):
     message = ""
