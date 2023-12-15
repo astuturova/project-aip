@@ -6,51 +6,17 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters.command import Command
 import config
-from utils import KeyboardConstructor, ForecastService
+from utils import KeyboardConstructor, ForecastService, MessageConstructor
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=config.bot_token)
 dp = Dispatcher()
 keyboard_constructor = KeyboardConstructor()
 forecast_service = ForecastService()
+messageConstructor = MessageConstructor()
 settings = {}
 
 
-async def send_message_interval():
-    while True:
-        await asyncio.sleep(60)
-        for key in settings.keys():
-            settings[key]["time"] -= 60
-            if settings[key]["time"] == 0:
-                data = forecast_service.get_forecast_for_day(settings[key]['region'], date.today())
-                message = get_output_message_for_day(data, "сегодня")
-                await bot.send_message(key, text=message, reply_markup=keyboard_constructor.get_menu_keyboard())
-            settings[key]["time"] = settings[key]["time"]
-
-def get_output_message_for_day(data, date):
-    return (f" 📍 Вы смотрите погоду в городе {data['location']}\n\n"
-            f" ☺ Ваш персональный прогноз погоды на {date}: \n"
-            f" - В течение дня будет {data['weatherCodeMax']}\n"
-            f" - 🌡️ Средняя температура воздуха составляет {data['temperatureAvg']} ℃, но ощущается как {data['temperatureApparentAvg']} ℃\n"
-            f" - 💧 Влажность около {data['humidityAvg']}%\n"
-            f" - 🌬️ Ветер дует со скоростью {data['windSpeedAvg']}м/с\n"
-            f" - 💨 А порывы ветра достигают {data['windGustAvg']} м/с")
-
-def get_output_message_for_week(data):
-    message = ""
-    if len(data) != 0:
-        message += data[0]['location'] + "\n\n"
-    for elem in data:
-        message += (f"Прогноз погоды на {elem['time']}: \n"
-                    f" - В течение дня будет {elem['weatherCodeMax']}\n"
-                    f" - 🌡️ Средняя температура воздуха составляет {elem['temperatureAvg']} ℃, но ощущается как: {elem['temperatureApparentAvg']} ℃\n"
-                    f" - 💧 Влажность около {elem['humidityAvg']}%\n"
-                    f" - 🌬️ Ветер дует со скоростью {elem['windSpeedAvg']} м/с\n"
-                    f" - 💨 А порывы ветра достигают {elem['windGustAvg']} м/с\n\n")
-    return message[:-1]
-
-
-# Отклик на команду старт
 @dp.message(Command("start"))
 async def cmd_random(message: types.Message):
     chat_id = message.chat.id
@@ -72,19 +38,18 @@ async def callbacks_num(callback: types.CallbackQuery):
     message = ""
     if action == "tomorrow":
         data = forecast_service.get_forecast_for_day(settings[chat_id]['region'], date.today() + timedelta(days=1))
-        message = get_output_message_for_day(data, "завтра")
+        message = messageConstructor.get_output_message_for_day(data, "завтра")
+        print(message)
     elif action == "today":
         data = forecast_service.get_forecast_for_day(settings[chat_id]['region'], date.today())
-        message = get_output_message_for_day(data, "сегодня")
+        message = messageConstructor.get_output_message_for_day(data, "сегодня")
     elif action == "week":
         data = forecast_service.get_forecast_for_week(settings[chat_id]['region'])
-        message = get_output_message_for_week(data)
+        message = messageConstructor.get_output_message_for_week(data)
     await update_message(callback.message, message)
-
     await callback.answer()
 
 
-# Отклик на кнопки "Прогноз погоды на завтра" и "Прогноз погоды на сегодня"
 @dp.callback_query(F.data.startswith("set_"))
 async def callbacks_num(callback: types.CallbackQuery):
     action = callback.data.split("_")[1]
@@ -116,7 +81,7 @@ async def callbacks_num(callback: types.CallbackQuery):
         settings[chat_id]['region'] = "US-CA"
 
     data = forecast_service.get_forecast_for_day(settings[chat_id]['region'], date.today())
-    message = get_output_message_for_day(data, "сегодня")
+    message = messageConstructor.get_output_message_for_day(data, "сегодня")
     await update_message(callback.message, message)
 
     await callback.answer()
@@ -141,13 +106,11 @@ async def callbacks_num(callback: types.CallbackQuery):
         settings[chat_id]['time'] = 86400
 
     data = forecast_service.get_forecast_for_day(settings[chat_id]['region'], date.today())
-    message = get_output_message_for_day(data, "сегодня")
+    message = messageConstructor.get_output_message_for_day(data, "сегодня")
     await update_message(callback.message, message)
-    print(settings[chat_id]['timer'])
     await callback.answer()
 
 
-# Эта функция обновляет текст сообщения
 async def update_message(message: types.Message, new_value: str):
     with suppress(TelegramBadRequest):
         await message.edit_text(
@@ -170,6 +133,18 @@ async def update_message_to_timer_settings(message: types.Message):
             "Настройте таймер:",
             reply_markup=keyboard_constructor.get_timer_settings_keyboard()
         )
+
+
+async def send_message_interval():
+    while True:
+        await asyncio.sleep(60)
+        for key in settings.keys():
+            settings[key]["time"] -= 60
+            if settings[key]["time"] == 0:
+                data = forecast_service.get_forecast_for_day(settings[key]['region'], date.today())
+                message = messageConstructor.get_output_message_for_day(data, "сегодня")
+                await bot.send_message(key, text=message, reply_markup=keyboard_constructor.get_menu_keyboard())
+            settings[key]["time"] = settings[key]["time"]
 
 
 async def main():
