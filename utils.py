@@ -138,8 +138,8 @@ class KeyboardConstructor:
                 types.InlineKeyboardButton(text="📅 Погода на неделю", callback_data="forecast_week")
             ],
             [
-                types.InlineKeyboardButton(text="Настроить регион", callback_data="set_region"),
-                types.InlineKeyboardButton(text="Настроить таймер", callback_data="set_timer")
+                types.InlineKeyboardButton(text="Регион", callback_data="set_region"),
+                types.InlineKeyboardButton(text="Таймер", callback_data="set_timer")
             ]
         ]
         keyboard = types.InlineKeyboardMarkup(inline_keyboard=buttons)
