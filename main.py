@@ -30,7 +30,7 @@ async def send_message_interval():
 def get_output_message_for_day(data, date):
     return (f" 📍 Вы смотрите погоду в городе {data['location']}\n\n"
             f" ☺ Ваш персональный прогноз погоды на {date}: \n"
-            f" - 😁 В течение дня будет {data['weatherCodeMax']}\n"
+            f" - В течение дня будет {data['weatherCodeMax']}\n"
             f" - 🌡️ Средняя температура воздуха составляет {data['temperatureAvg']} ℃, но ощущается как {data['temperatureApparentAvg']} ℃\n"
             f" - 💧 Влажность около {data['humidityAvg']}%\n"
             f" - 🌬️ Ветер {date} дует со скоростью {data['windSpeedAvg']}м/с\n"
