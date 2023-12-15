@@ -42,11 +42,11 @@ def get_output_message_for_week(data):
         message += data[0]['location'] + "\n\n"
     for elem in data:
         message += (f"Прогноз погоды на {elem['time']}: \n"
-                    f"Вас ожидает {elem['weatherCodeMax']}\n"
-                    f"Средняя температура: {elem['temperatureAvg']} ℃, но ощущается как: {elem['temperatureApparentAvg']} ℃\n"
-                    f"Средняя влажность: {elem['humidityAvg']}\n"
-                    f"Средняя скорость ветра {elem['windSpeedAvg']}\n"
-                    f"Порывы ветра: {elem['windGustAvg']}\n\n")
+                    f" - В течение дня будет {elem['weatherCodeMax']}\n"
+                    f" - 🌡️ Средняя температура воздуха составляет {elem['temperatureAvg']} ℃, но ощущается как: {elem['temperatureApparentAvg']} ℃\n"
+                    f" - 💧 Влажность около {elem['humidityAvg']}%\n"
+                    f" - 🌬️ Ветер {date} дует со скоростью {elem['windSpeedAvg']}м/с\n"
+                    f" - 💨 А порывы ветра достигают {elem['windGustAvg']} м/с\n\n")
     return message[:-1]
 
 
