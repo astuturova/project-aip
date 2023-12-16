@@ -19,6 +19,17 @@ settings = {}
 
 @dp.message(Command("start"))
 async def cmd_random(message: types.Message):
+    """Описание функции
+    Обработчик команды /start. Принимает входящее сообщение и отвечает ему сообщением с выбором опций.
+    Инициализирует глобальную переменную settings.
+
+    Args:
+        message (types.Message): входящее сообщение
+
+    Raises:
+        ValueError: Если возникает проблема с аргументами.
+
+    """
     chat_id = message.chat.id
     settings[chat_id] = {
         'region': "RU-MOW",
@@ -26,13 +37,24 @@ async def cmd_random(message: types.Message):
         "time": 86400
     }
     await message.answer(
-        "Привет, я бот, составляющий проноз погоды",
+        "Привет, я бот, составляющий прогноз погоды",
         reply_markup=keyboard_constructor.get_menu_keyboard()
     )
 
 
 @dp.callback_query(F.data.startswith("forecast_"))
 async def callbacks_num(callback: types.CallbackQuery):
+    """Описание функции
+    Обработчик нажатия кнопок, относящихся к прогнозу погоды: на сегодня, завтра и на неделю.
+    Получает данные из forecast_service, генерирует итоговое сообщение для ответа и изменяет текст сообщения бота.
+
+    Args:
+        callback (types.CallbackQuery): ID нажатой кнопки
+
+    Raises:
+        ValueError: Если возникает проблема с аргументами.
+
+    """
     action = callback.data.split("_")[1]
     chat_id = callback.message.chat.id
     message = ""
@@ -52,6 +74,17 @@ async def callbacks_num(callback: types.CallbackQuery):
 
 @dp.callback_query(F.data.startswith("set_"))
 async def callbacks_num(callback: types.CallbackQuery):
+    """Описание функции
+    Обработчик нажатия кнопок, относящихся к настройке бота: таймер и регион.
+    Изменяет сообщение бота в соответствии с выбранной настройкой.
+
+    Args:
+        callback (types.CallbackQuery): ID нажатой кнопки
+
+    Raises:
+        ValueError: Если возникает проблема с аргументами.
+
+    """
     action = callback.data.split("_")[1]
 
     if action == "region":
@@ -64,6 +97,18 @@ async def callbacks_num(callback: types.CallbackQuery):
 
 @dp.callback_query(F.data.startswith("region_"))
 async def callbacks_num(callback: types.CallbackQuery):
+    """Описание функции
+    Обработчик нажатия кнопок, относящихся к выбору региона.
+    В соответсвии с выбранным регионом изменяет параметр region в глобальной переменной settings.
+    Получает данные из forcast_service, генерирует новый прогноз погоды в нужном регионе и изменяет текст сообщения бота.
+
+    Args:
+        callback (types.CallbackQuery): ID нажатой кнопки
+
+    Raises:
+        ValueError: Если возникает проблема с аргументами.
+
+    """
     action = callback.data.split("_")[1]
     chat_id = callback.message.chat.id
 
@@ -89,6 +134,18 @@ async def callbacks_num(callback: types.CallbackQuery):
 
 @dp.callback_query(F.data.startswith("timer_"))
 async def callbacks_num(callback: types.CallbackQuery):
+    """"Описание функции
+    Обработчик нажатия кнопок, относящихся к настройке таймера.
+    В соответсвии с выбранным интервалом изменяет параметр timer и time в глобальной переменной settings.
+    Получает данные из forcast_service, генерирует новый прогноз погоды с выбранным интервалом и изменяет текст сообщения бота.
+
+    Args:
+        callback (types.CallbackQuery): ID нажатой кнопки
+
+    Raises:
+        ValueError: Если возникает проблема с аргументами.
+
+    """
     action = callback.data.split("_")[1]
     chat_id = callback.message.chat.id
 
@@ -112,6 +169,17 @@ async def callbacks_num(callback: types.CallbackQuery):
 
 
 async def update_message(message: types.Message, new_value: str):
+    """Описание функции
+    Изменяет текст сообщения бота. Устанавливает в качестве нового значения new_value.
+
+    Args:
+        message (types.Message): ID нажатой кнопки
+        new_value (str): новый текст сообщения, содержащий прогноз погоды
+
+    Raises:
+        ValueError: Если возникает проблема с аргументами.
+
+    """
     with suppress(TelegramBadRequest):
         await message.edit_text(
             new_value,
@@ -120,6 +188,16 @@ async def update_message(message: types.Message, new_value: str):
 
 
 async def update_message_to_region_settings(message: types.Message):
+    """Описание функции
+    Изменяет текст сообщения бота. Устанавливает в качестве нового значения текст, предлагающий выбрать регион.
+
+    Args:
+        message (types.Message): ID нажатой кнопки
+
+    Raises:
+        ValueError: Если возникает проблема с аргументами.
+
+    """
     with suppress(TelegramBadRequest):
         await message.edit_text(
             "Выберите регион:",
@@ -128,6 +206,16 @@ async def update_message_to_region_settings(message: types.Message):
 
 
 async def update_message_to_timer_settings(message: types.Message):
+    """Описание функции
+    Изменяет текст сообщения бота. Устанавливает в качестве нового значения текст, предлагающий изменить таймер.
+
+    Args:
+        message (types.Message): ID нажатой кнопки
+
+    Raises:
+        ValueError: Если возникает проблема с аргументами.
+
+    """
     with suppress(TelegramBadRequest):
         await message.edit_text(
             "Настройте таймер:",
@@ -136,6 +224,12 @@ async def update_message_to_timer_settings(message: types.Message):
 
 
 async def send_message_interval():
+    """Описание функции
+    функуия, которая работает в фоне. Каждую минуту проверяет, должна ли она посылать уведомление о текущей погоде определённому
+    пользователю. Уменьшает параметр time переменной settins на 60 секунд. Если time будет равен нулю, то присылает уведомление о
+    текущей погоде и устанавливает time в значении переменной timer.
+
+    """
     while True:
         await asyncio.sleep(60)
         for key in settings.keys():
@@ -144,10 +238,14 @@ async def send_message_interval():
                 data = forecast_service.get_forecast_for_day(settings[key]['region'], date.today())
                 message = messageConstructor.get_output_message_for_day(data, "сегодня")
                 await bot.send_message(key, text=message, reply_markup=keyboard_constructor.get_menu_keyboard())
-            settings[key]["time"] = settings[key]["time"]
+            settings[key]["time"] = settings[key]["timer"]
 
 
 async def main():
+    """Описание функции
+    Запускает бота и фоновый процесс send_message_interval.
+
+    """
     loop = asyncio.get_event_loop()
     t1 = loop.create_task(send_message_interval())
     await dp.start_polling(bot)
