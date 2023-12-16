@@ -183,7 +183,6 @@ class KeyboardConstructor:
         types.InlineKeyboardMarkup: клавиатура с Inline кнопками для меню
 
         """
-
         buttons = [
             [
                 types.InlineKeyboardButton(text="⏰ Погода на завтра", callback_data="forecast_tomorrow"),
@@ -272,7 +271,7 @@ class MessageConstructor:
 
         """
         return (f" 📍 Вы смотрите погоду в городе {data['location']}\n\n"
-                f" ☺ Ваш персональный прогноз погоды на {date}: \n"
+                f" ☺ Ваш персональный прогноз погоды на {date}:\n"
                 f" - В течение дня будет {data['weatherCodeMax']}\n"
                 f" - 🌡️ Средняя температура воздуха составляет {data['temperatureAvg']} ℃, но ощущается как {data['temperatureApparentAvg']} ℃\n"
                 f" - 💧 Влажность около {data['humidityAvg']}%\n"
@@ -294,7 +293,7 @@ class MessageConstructor:
         if len(data) != 0:
             message += data[0]['location'] + "\n\n"
         for elem in data:
-            message += (f"Прогноз погоды на {elem['time']}: \n"
+            message += (f"Прогноз погоды на {elem['time']}:\n"
                         f" - В течение дня будет {elem['weatherCodeMax']}\n"
                         f" - 🌡️ Средняя температура воздуха составляет {elem['temperatureAvg']} ℃, но ощущается как: {elem['temperatureApparentAvg']} ℃\n"
                         f" - 💧 Влажность около {elem['humidityAvg']}%\n"

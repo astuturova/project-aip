@@ -61,7 +61,6 @@ async def callbacks_num(callback: types.CallbackQuery):
     if action == "tomorrow":
         data = forecast_service.get_forecast_for_day(settings[chat_id]['region'], date.today() + timedelta(days=1))
         message = messageConstructor.get_output_message_for_day(data, "завтра")
-        print(message)
     elif action == "today":
         data = forecast_service.get_forecast_for_day(settings[chat_id]['region'], date.today())
         message = messageConstructor.get_output_message_for_day(data, "сегодня")
